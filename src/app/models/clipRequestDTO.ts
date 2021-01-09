@@ -10,6 +10,11 @@ export class Clip {
     creator_name: string;
     video_id: string;
     game_id: string;
+    language: string;
+    title: string;
+    view_count: number;
+    created_at: Date;
+    thumbnail_url: string;
 
   constructor(
     id: string, 
@@ -42,29 +47,25 @@ export class Clip {
     this.created_at = created_at
     this.thumbnail_url = thumbnail_url
   }
-    language: string;
-    title: string;
-    view_count: number;
-    created_at: Date;
-    thumbnail_url: string;
+
 }
 
 export class Pagination {
-
-  constructor(cursor: string) {
-    this.cursor = cursor
-  }
     cursor: string;
+
+    constructor(cursor: string) {
+        this.cursor = cursor
+    }  
 }
 
 export class clipRequestDTO {
-
-  constructor(data: Clip[], pagination: Pagination) {
-    this.data = data
-    this.pagination = pagination
-  }
     data: Clip[];
     pagination: Pagination;
+
+    constructor(data: Clip[], pagination: Pagination) {
+        this.data = data
+        this.pagination = pagination
+    }
 }
 
 

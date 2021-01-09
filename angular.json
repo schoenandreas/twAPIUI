@@ -68,7 +68,10 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "twAPIUI:build"
+            "browserTarget": "twAPIUI:build",
+            "sslKey": "./../ssl/localhost.key",
+            "sslCert": "./../ssl/localhost.crt",
+            "ssl": true
           },
           "configurations": {
             "production": {

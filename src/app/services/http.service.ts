@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { authRequestDTO } from '../models/authRequestDTO';
 import { keys } from './../keys';
 import { tokenize } from '@angular/compiler/src/ml_parser/lexer';
+import { GamesRequestDTO } from '../models/gamesRequestDTO';
 
 @Injectable({
   providedIn: 'root'
@@ -25,10 +26,24 @@ export class HTTPService implements OnInit {
   }
 
   requestClips():Observable<clipRequestDTO>{
-    let params = new HttpParams().set('broadcaster_id', '37402112').set('first', '100');
+    let params = new HttpParams().set('broadcaster_id', '37402112').set('started_at', '2020-12-31T00:00:00Z').set('first', '100');
     let headers = new HttpHeaders().set('client-id', this.client_id).set('Authorization', "Bearer "+this.token);
 
     return this.http.get<clipRequestDTO>(this.apiURL + "/clips", {headers , params });
+  }
+
+  getClipsForGameSince(gameID:number, length:number, since:string):Observable<clipRequestDTO>{
+    let params = new HttpParams().set('game_id', ""+gameID).set('started_at', since).set('first', ""+length);
+    let headers = new HttpHeaders().set('client-id', this.client_id).set('Authorization', "Bearer "+this.token);
+
+    return this.http.get<clipRequestDTO>(this.apiURL + "/clips", {headers , params });
+  }
+
+  getTopGames(length:number):Observable<GamesRequestDTO>{
+    let params = new HttpParams().set('first', ""+length);
+    let headers = new HttpHeaders().set('client-id', this.client_id).set('Authorization', "Bearer "+this.token);
+
+    return this.http.get<GamesRequestDTO>(this.apiURL + "/games/top", {headers , params });
   }
 
   getAuth(){

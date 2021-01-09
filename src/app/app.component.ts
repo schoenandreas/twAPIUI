@@ -1,32 +1,16 @@
 import { AfterViewInit, OnInit } from '@angular/core';
 import { HTTPService } from './services/http.service';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { clipRequestDTO, Clip } from './models/clipRequestDTO';
 
 import { Component,ChangeDetectionStrategy,ViewChild,TemplateRef,} from '@angular/core';
-import {startOfDay,endOfDay,subDays,addDays,endOfMonth,isSameDay,isSameMonth,addHours,} from 'date-fns';
-import { Subject } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import {CalendarEvent,CalendarEventAction,CalendarEventTimesChangedEvent,CalendarView,} from 'angular-calendar';
+import { ConverterService } from './services/converter.service';
+import { Game } from './models/gamesRequestDTO';
 
-const colors: any = {
-  red: {
-    primary: '#ad2121',
-    secondary: '#FAE3E3',
-  },
-  blue: {
-    primary: '#1e90ff',
-    secondary: '#D1E8FF',
-  },
-  yellow: {
-    primary: '#e3bc08',
-    secondary: '#FDF1BA',
-  },
-};
+
 
 @Component({
   selector: 'app-root',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -36,6 +20,17 @@ export class AppComponent implements OnInit, AfterViewInit {
   title = 'twAPIUI';
 
   clips!: Clip[];
+  games!: Game[];
+
+  minViews:number = 1;
+  queryLengthPerGame:number = 10;
+  maxAge:String = "01:00";
+
+  excludedStreamers:String[] = ["FarhadXRay","ANTILIPSI","Minnie_Pinkunotori","kobemir","bukse"];
+
+  now = new Date();
+
+  constructor(private httpService: HTTPService, private converterService:ConverterService) {}
 
   getClips() {
     this.httpService.requestClips().subscribe(
@@ -46,151 +41,99 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
   }
 
+  getGames(algo:string) {
+    this.httpService.getTopGames(20).subscribe(
+      (data) => {
+        this.games = data.data;
+        let gameIds : number[] = [];
+        this.games.forEach(game => gameIds.push(Number(game.id)));
+        this.getClipsForTopGames(algo,gameIds);
+      },
+      (error) => {}
+    );
+  }
+
+  getClipsForTopGames(algo:string, gameIds : number[]) {
+    this.now = new Date();
+    let d = new Date();
+    d.setMinutes(d.getMinutes()-Number(this.maxAge.substr(3,5)));
+    d.setHours(d.getHours()-Number(this.maxAge.substr(0,2)));
+    
+    const time :string = d.toISOString().substring(0,19)+"Z";
+    const count : number = this.queryLengthPerGame;
+    const smallCount = Math.round(count*0.5);
+    const verySmallCount =Math.round(smallCount*0.5);
+    const largeCount =Math.round(count*2);
+    
+    //if anyone sees this don't judge me, I was tired...
+    forkJoin({
+      a: this.httpService.getClipsForGameSince(gameIds[0],largeCount,time),
+      b: this.httpService.getClipsForGameSince(gameIds[1],largeCount,time),
+      c: this.httpService.getClipsForGameSince(gameIds[2],largeCount,time),
+      d: this.httpService.getClipsForGameSince(gameIds[3],largeCount,time),
+      e: this.httpService.getClipsForGameSince(gameIds[4],largeCount,time),
+      f: this.httpService.getClipsForGameSince(gameIds[5],count,time),
+      g: this.httpService.getClipsForGameSince(gameIds[6],count,time),
+      h: this.httpService.getClipsForGameSince(gameIds[7],count,time),
+      i: this.httpService.getClipsForGameSince(gameIds[8],count,time),
+      j: this.httpService.getClipsForGameSince(gameIds[9],count,time),
+      k: this.httpService.getClipsForGameSince(gameIds[10],smallCount,time),
+      l: this.httpService.getClipsForGameSince(gameIds[11],smallCount,time),
+      m: this.httpService.getClipsForGameSince(gameIds[12],smallCount,time),
+      n: this.httpService.getClipsForGameSince(gameIds[13],smallCount,time),
+      o: this.httpService.getClipsForGameSince(gameIds[14],smallCount,time),
+      p: this.httpService.getClipsForGameSince(gameIds[15],verySmallCount,time),
+      q: this.httpService.getClipsForGameSince(gameIds[16],verySmallCount,time),
+      r: this.httpService.getClipsForGameSince(gameIds[17],verySmallCount,time),
+      s: this.httpService.getClipsForGameSince(gameIds[18],verySmallCount,time),
+      t: this.httpService.getClipsForGameSince(gameIds[19],verySmallCount,time),
+
+    })
+    .subscribe(({a, b, c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t}) => {
+      let items:Clip[] =  [ ...a.data, ...b.data, ...c.data, ...d.data, ...e.data, ...f.data, ...g.data, ...h.data, ...i.data, ...j.data, ...k.data, ...l.data, ...m.data, ...n.data, ...o.data, ...p.data, ...q.data, ...r.data, ...s.data, ...t.data];
+      
+      this.clips = this.sortAlgo(items,algo);
+      console.log("done");
+    });
+    
+  }
+
+  sortAlgo(array:Clip[],input:string):Clip[]{
+
+    let tmp = array.filter(c => c.language=="en" && c.view_count>=this.minViews && !this.excludedStreamers.includes(c.broadcaster_name));
+    if(input == "time"){
+      return tmp.sort(function (a, b) {
+        return new Date(b.created_at).getTime() -  new Date(a.created_at).getTime();
+      });
+    }else if(input == "views"){
+      return tmp.sort(function (a, b) {
+        return b.view_count - a.view_count;
+      });
+    }
+    return array;
+
+  }
+
   auth() {
     this.httpService.getAuth();
   }
 
-  @ViewChild('modalContent', { static: true }) modalContent!: TemplateRef<any>;
+  age(input:Date):string{
+    let time = new Date().getTime() - new Date(input).getTime();
+    let result = new Date(0,0,0);
+    result.setMilliseconds(time);
+    let min = result.getMinutes()<10 ? '0'+result.getMinutes():result.getMinutes();
+    return result.getHours()+":"+min;
+  }
 
-  view: CalendarView = CalendarView.Month;
-
-  CalendarView = CalendarView;
-
-  viewDate: Date = new Date();
-
-  modalData!: {
-    action: string;
-    event: CalendarEvent;
-  };
-
-  actions: CalendarEventAction[] = [
-    {
-      label: '<i class="fas fa-fw fa-pencil-alt"></i>',
-      a11yLabel: 'Edit',
-      onClick: ({ event }: { event: CalendarEvent }): void => {
-        this.handleEvent('Edited', event);
-      },
-    },
-    {
-      label: '<i class="fas fa-fw fa-trash-alt"></i>',
-      a11yLabel: 'Delete',
-      onClick: ({ event }: { event: CalendarEvent }): void => {
-        this.events = this.events.filter((iEvent) => iEvent !== event);
-        this.handleEvent('Deleted', event);
-      },
-    },
-  ];
-
-  refresh: Subject<any> = new Subject();
-
-  events: CalendarEvent[] = [
-    {
-      start: subDays(startOfDay(new Date()), 1),
-      end: addDays(new Date(), 1),
-      title: 'A 3 day event',
-      color: colors.red,
-      actions: this.actions,
-      allDay: true,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true,
-      },
-      draggable: true,
-    },
-    {
-      start: startOfDay(new Date()),
-      title: 'An event with no end date',
-      color: colors.yellow,
-      actions: this.actions,
-    },
-    {
-      start: subDays(endOfMonth(new Date()), 3),
-      end: addDays(endOfMonth(new Date()), 3),
-      title: 'A long event that spans 2 months',
-      color: colors.blue,
-      allDay: true,
-    },
-    {
-      start: addHours(startOfDay(new Date()), 2),
-      end: addHours(new Date(), 2),
-      title: 'A draggable and resizable event',
-      color: colors.yellow,
-      actions: this.actions,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true,
-      },
-      draggable: true,
-    },
-  ];
-
-  activeDayIsOpen: boolean = true;
-
-  constructor(private modal: NgbModal, private httpService: HTTPService) {}
-
-  dayClicked({ date, events }: { date: Date; events: CalendarEvent[] }): void {
-    if (isSameMonth(date, this.viewDate)) {
-      if (
-        (isSameDay(this.viewDate, date) && this.activeDayIsOpen === true) ||
-        events.length === 0
-      ) {
-        this.activeDayIsOpen = false;
-      } else {
-        this.activeDayIsOpen = true;
-      }
-      this.viewDate = date;
+  openAll(){
+    for(let clip of this.clips){
+        window.open(clip.url, "_blank");
     }
   }
 
-  eventTimesChanged({
-    event,
-    newStart,
-    newEnd,
-  }: CalendarEventTimesChangedEvent): void {
-    this.events = this.events.map((iEvent) => {
-      if (iEvent === event) {
-        return {
-          ...event,
-          start: newStart,
-          end: newEnd,
-        };
-      }
-      return iEvent;
-    });
-    this.handleEvent('Dropped or resized', event);
-  }
 
-  handleEvent(action: string, event: CalendarEvent): void {
-    this.modalData = { event, action };
-    this.modal.open(this.modalContent, { size: 'lg' });
-  }
-
-  addEvent(): void {
-    this.events = [
-      ...this.events,
-      {
-        title: 'New event',
-        start: startOfDay(new Date()),
-        end: endOfDay(new Date()),
-        color: colors.red,
-        draggable: true,
-        resizable: {
-          beforeStart: true,
-          afterEnd: true,
-        },
-      },
-    ];
-  }
-
-  deleteEvent(eventToDelete: CalendarEvent) {
-    this.events = this.events.filter((event) => event !== eventToDelete);
-  }
-
-  setView(view: CalendarView) {
-    this.view = view;
-  }
-
-  closeOpenMonthViewDay() {
-    this.activeDayIsOpen = false;
+  async delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
   }
 }

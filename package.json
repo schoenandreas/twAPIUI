@@ -48,5 +48,6 @@
     "ts-node": "~8.3.0",
     "tslint": "~6.1.0",
     "typescript": "~4.0.2"
-  }
+  },
+  "start": "ng serve --ssl --ssl-key C:\\Users\\Andreas\\Documents\\ssllocalhost.key  --ssl-cert C:\\Users\\Andreas\\Documents\\localhost.crt"
 }
