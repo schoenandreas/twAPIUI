@@ -6,6 +6,7 @@ import { authRequestDTO } from '../models/authRequestDTO';
 import { keys } from './../keys';
 import { tokenize } from '@angular/compiler/src/ml_parser/lexer';
 import { GamesRequestDTO } from '../models/gamesRequestDTO';
+import { subMinutes } from 'date-fns';
 
 @Injectable({
   providedIn: 'root'
@@ -61,5 +62,9 @@ export class HTTPService implements OnInit {
     });
     
 
+  }
+
+  getExcluded():Observable<String>{
+    return this.http.get('assets/excluded.txt', {responseType: 'text'});
   }
 }

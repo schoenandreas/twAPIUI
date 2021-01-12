@@ -16,17 +16,22 @@ import { Game } from './models/gamesRequestDTO';
 })
 export class AppComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {}
-  ngOnInit(): void {}
+  ngOnInit(): void {
+
+    this.httpService.getExcluded().subscribe(
+      data => this.excludedStreamers = data.split("\n").filter(s => s !== ""));
+      
+  }
   title = 'twAPIUI';
 
-  clips!: Clip[];
+  clips: Clip[] = [];
   games!: Game[];
 
   minViews:number = 1;
   queryLengthPerGame:number = 10;
   maxAge:String = "01:00";
 
-  excludedStreamers:String[] = ["FarhadXRay","ANTILIPSI","Minnie_Pinkunotori","kobemir","bukse"];
+  excludedStreamers:String[] = [];
 
   now = new Date();
 
@@ -43,17 +48,27 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   getGames(algo:string) {
     this.httpService.getTopGames(20).subscribe(
-      (data) => {
+      async (data) => {
         this.games = data.data;
         let gameIds : number[] = [];
         this.games.forEach(game => gameIds.push(Number(game.id)));
+
         this.getClipsForTopGames(algo,gameIds);
+        await this.delay(200);
+        this.getClipsForTopGames(algo,gameIds);
+        await this.delay(200);
+        this.getClipsForTopGames(algo,gameIds);
+        await this.delay(200);
+        //this.getClipsForTopGames(algo,gameIds);
+        await this.delay(100);
+        //this.getClipsForTopGames(algo,gameIds);
       },
       (error) => {}
     );
   }
 
   getClipsForTopGames(algo:string, gameIds : number[]) {
+    console.log("started")
     this.now = new Date();
     let d = new Date();
     d.setMinutes(d.getMinutes()-Number(this.maxAge.substr(3,5)));
@@ -93,14 +108,16 @@ export class AppComponent implements OnInit, AfterViewInit {
       let items:Clip[] =  [ ...a.data, ...b.data, ...c.data, ...d.data, ...e.data, ...f.data, ...g.data, ...h.data, ...i.data, ...j.data, ...k.data, ...l.data, ...m.data, ...n.data, ...o.data, ...p.data, ...q.data, ...r.data, ...s.data, ...t.data];
       
       this.clips = this.sortAlgo(items,algo);
+
       console.log("done");
     });
     
   }
 
   sortAlgo(array:Clip[],input:string):Clip[]{
-
-    let tmp = array.filter(c => c.language=="en" && c.view_count>=this.minViews && !this.excludedStreamers.includes(c.broadcaster_name));
+    console.log(this.clips)
+    let tmp = array.filter(c => c.language=="en" && c.view_count>=this.minViews ).filter( c => this.excludedStreamers.indexOf(c.broadcaster_name)==-1);
+    console.log(tmp)
     if(input == "time"){
       return tmp.sort(function (a, b) {
         return new Date(b.created_at).getTime() -  new Date(a.created_at).getTime();

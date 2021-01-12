@@ -26,7 +26,8 @@ QueryTime: {{now.toTimeString().substring(0,8)}}
       <th>Link_______</th>
       <th>Age________</th>
       <th>Views______</th>
-      <th>Streamer______</th>
+      <th>Streamer___</th>
+      <th>Game_______</th>
       <th>Title______</th>
   </thead>
   <tbody>
@@ -35,6 +36,7 @@ QueryTime: {{now.toTimeString().substring(0,8)}}
           <td>{{age(clip.created_at)}}</td>
           <td>{{clip.view_count}}</td>
           <td>{{clip.broadcaster_name}}</td>
+          <td>{{clip.game_id}}</td>
           <td>{{clip.title.substring(0,80)}}</td>
       </tr>
   </tbody>
