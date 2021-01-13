@@ -1,14 +1,15 @@
 
 <button (click)="getGames('views')">Get by views</button>
 <button (click)="getGames('time')">Get by time</button>
+<button (click)="getStreamers()">Get Streamer by time</button>
 <button (click)="openAll()">OpenAll</button>
 
 <label>Min Views</label>
-<input type="number" value="1" placeholder="1" [(ngModel)]="minViews">
-<label>queryLengthPerGame</label>
-<input type="number" value="10" placeholder="10" [(ngModel)]="queryLengthPerGame">
+<input type="number"  placeholder="1" [(ngModel)]="minViews">
+<label>queryLength</label>
+<input type="number"  placeholder="20" [(ngModel)]="queryLengthPerGame">
 <label>MaxAge</label>
-<input type="text" value="01:00" placeholder="01:00" [(ngModel)]="maxAge">
+<input type="text"  placeholder="00:30" [(ngModel)]="maxAge">
 QueryTime: {{now.toTimeString().substring(0,8)}}
 
 <!--
