@@ -4,14 +4,18 @@
 <button (click)="getStreamers()">Get Streamer by time</button>
 <button (click)="openAll()">OpenAll</button>
 
+
+
 <label>Min Views</label>
 <input type="number"  placeholder="1" [(ngModel)]="minViews">
 <label>queryLength</label>
 <input type="number"  placeholder="20" [(ngModel)]="queryLengthPerGame">
 <label>MaxAge</label>
 <input type="text"  placeholder="00:30" [(ngModel)]="maxAge">
-QueryTime: {{now.toTimeString().substring(0,8)}}
-
+<label>AutoRefresh</label>
+<input type="number"  placeholder="0" [(ngModel)]="autoRefresh">
+Time: {{now.toTimeString().substring(0,8)}}
+Since: {{subscribeTimer *1000 | date:'mm:ss'}}
 <!--
 <div *ngFor="let game of games">
   {{game.id}} + {{game.name}}

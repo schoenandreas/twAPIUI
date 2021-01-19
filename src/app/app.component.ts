@@ -1,6 +1,6 @@
 import { AfterViewInit, OnInit } from '@angular/core';
 import { HTTPService } from './services/http.service';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, Subscription, timer } from 'rxjs';
 import { clipRequestDTO, Clip } from './models/clipRequestDTO';
 
 import { Component,ChangeDetectionStrategy,ViewChild,TemplateRef,} from '@angular/core';
@@ -27,15 +27,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   clips: Clip[] = [];
   games!: Game[];
 
-  minViews:number = 1;
-  queryLengthPerGame:number = 20;
-  maxAge:String = "00:30";
+  minViews:number = 3;
+  queryLengthPerGame:number = 8;
+  maxAge:String = "00:15";
+  autoRefresh:number = 0;
 
   excludedStreamers:String = "";
   excludedGames : Number[] = [512710,21779,138585,29595,518204];//Warzone,LoL,Heartstone,Dota2,Fifa21
 
 
-  selectedStreamers: string[] = ["boxbox","xqcow","gmhikaru","JustaMinx","knut","pokelawls","loltyler1","myth","forsen","ludwig","ray__c","itssliker","nmplol","destiny","hasanabi","amouranth","maya","botezlive","sashagrey","codemiko","greekgodx","sodapoppin","shroud","tfue","timthetatman","summit1g","asmongold","jinnytty","esfandtv","mizkif","healthygamer_gg","sweet_anita"];
+  selectedStreamers: string[] = ["xqcow","gmhikaru","pokimane","loltyler1","forsen","hasanabi","botezlive","codemiko","sodapoppin","shroud","tfue","lilypichu","markiplier","ludwig","timthetatman","asmongold","jinnytty","esfandtv","mizkif","healthygamer_gg","sweet_anita","sykkuno","jacksepticeye"];
   now = new Date();
 
   constructor(private httpService: HTTPService, private converterService:ConverterService) {}
@@ -50,6 +51,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   getGames(algo:string) {
+    this.observableTimer();
     this.httpService.getTopGames(15).subscribe(
       async (data) => {
         this.games = data.data;
@@ -116,6 +118,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   async getStreamers(){
+    this.observableTimer();
     let streamers:Streamer[] = [];
     let returns:number = 0;
     this.selectedStreamers.forEach(str => this.httpService.getStreamerInfo(str).subscribe(
@@ -221,5 +224,24 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   async delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
+  }
+
+  subscribeTimer = 0;
+
+  source =timer(1000, 1000);
+  time: Subscription = this.source.subscribe(val => {
+    this.subscribeTimer = val;
+  });;
+
+  observableTimer() {
+    this.time.unsubscribe();
+    this.source = timer(1000, 1000);
+    this.time = this.source.subscribe(val => {
+      this.subscribeTimer = val;
+      if(this.autoRefresh>0 && val >= this.autoRefresh){
+        console.log("refre");
+        this.getStreamers();
+      }
+    });
   }
 }
